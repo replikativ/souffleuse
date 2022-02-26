@@ -1,0 +1,5 @@
+{:deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        org.clojure/core.match {:mvn/version "1.0.0"}
+        org.clojure/tools.logging {:mvn/version "1.2.4"}
+        cheshire/cheshire {:mvn/version "5.10.2"}
+        http-kit/http-kit {:mvn/version "2.5.3"}}}
