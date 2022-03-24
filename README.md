@@ -16,3 +16,10 @@ Environment variables:
 
 Either via container: https://hub.docker.com/r/replikativ/souffleuse
 or the uberjar `java -jar target/souffleuse-0.1.8`.
+
+## Set webhooks
+
+[On GitHub set a webhook](https://github.com/organizations/replikativ/settings/hooks) to send Releases
+to a domain where souffleuse is running to the path `/github/release`. Take [the credentials from your
+Twitter bot](https://developer.twitter.com/en/portal/dashboard). [Get the URL for your Slack integration](https://clojurians.slack.com/apps/A033SFT699B-replikativ)
+from the Slack-bot.
