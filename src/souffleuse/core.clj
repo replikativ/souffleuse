@@ -94,7 +94,7 @@
 
 (defn check-if-release [body]
   (let [action (:action body)]
-    (when (not= action "released")
+    (when (not= action "published")
       (f/fail :not-a-release))
     body))
 
