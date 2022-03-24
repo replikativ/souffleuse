@@ -1,4 +1,5 @@
 (ns souffleuse.core
+  (:gen-class)
   (:require [souffleuse.scheduler :as s]
             [org.httpkit.server :as srv]
             [org.httpkit.client :as clnt]
@@ -19,15 +20,14 @@
 (def slack-hook-url (System/getenv "SLACK_HOOK_URL"))
 (def slack-channel "#datahike")
 
-(def twitter-api-key (System/getenv "API_KEY"))
-(def twitter-api-secret (System/getenv "API_SECRET"))
-(def twitter-access-token (System/getenv "ACCESS_TOKEN"))
-(def twitter-access-token-secret (System/getenv "ACCESS_TOKEN_SECRET"))
-(def twitter-creds (oauth/make-oauth-creds
-                    twitter-api-key
-                    twitter-api-secret
-                    twitter-access-token
-                    twitter-access-token-secret))
+(def twitter-api-key (System/getenv "TWITTER_API_KEY"))
+(def twitter-api-secret (System/getenv "TWITTER_API_SECRET"))
+(def twitter-access-token (System/getenv "TWITTER_ACCESS_TOKEN"))
+(def twitter-access-token-secret (System/getenv "TWITTER_ACCESS_TOKEN_SECRET"))
+(def twitter-creds (oauth/make-oauth-creds twitter-api-key
+                                           twitter-api-secret
+                                           twitter-access-token
+                                           twitter-access-token-secret))
 
 (defn log-request [d]
   (log/info "Received webhook" d)
@@ -124,11 +124,19 @@
 ;; Server
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def server (let [url (str "http://localhost:" port "/")]
-              (println "serving" url)
-              (srv/run-server #'routes {:port port})))
+(defn server []
+  (let [url (str "http://localhost:" port "/")]
+    (log/info "Server started" {:url url
+                                :port port})
+    (srv/run-server #'routes {:port port})))
 
-(def scheduler (s/start-scheduler trigger-slack-reminder))
+(defn scheduler []
+  (log/info "Scheduler started")
+  (s/start-scheduler trigger-slack-reminder))
+
+(defn -main [& args]
+  (server)
+  (scheduler))
 
 (comment
   (def payload (json/parse-string (slurp "test/payload.sample.json") true))
