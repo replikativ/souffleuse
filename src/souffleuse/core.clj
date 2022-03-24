@@ -68,7 +68,7 @@
 
 (defn trigger-slack-announcement [body]
   (if slack-hook-url
-    (let [[release repository] (juxt body :release :repository)
+    (let [[release repository] ((juxt :release :repository) body)
           message (format "Version %s of %s was just released. Find the changelog or get in contact with us <%s|over on GitHub.>"
                           (:tag_name release)
                           (:name repository)
@@ -82,7 +82,7 @@
   body)
 
 (defn trigger-twitter-announcement [body]
-  (let [[release repository] (juxt body :release :repository)
+  (let [[release repository] ((juxt :release :repository) body)
         message (format "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
                         (:tag_name release)
                         (:name repository)
@@ -140,6 +140,7 @@
 
 (comment
   (def payload (json/parse-string (slurp "test/payload.sample.json") true))
+  ((juxt :release :repository) payload)
 
   (srv/server-stop! @server)
 
