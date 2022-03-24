@@ -1,10 +1,11 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.3"}
         org.clojure/core.match {:mvn/version "1.0.0"}
-        org.clojure/tools.logging {:mvn/version "1.2.4"}
+        com.taoensso/timbre {:mvn/version "5.2.1"}
         cheshire/cheshire {:mvn/version "5.10.2"}
         http-kit/http-kit {:mvn/version "2.5.3"}
         twitter-api/twitter-api {:mvn/version "1.8.0"}
-        jarohen/chime {:mvn/version "0.3.3"}}
+        jarohen/chime {:mvn/version "0.3.3"}
+        failjure/failjure {:mvn/version "2.2.0"}}
  :aliases {:deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.0"}}
                     :main-opts ["-m" "deps-deploy.deps-deploy" "deploy" "replikativ-datahike.jar"]}
 
@@ -25,5 +26,6 @@
                                                         :sha "a83ee8da47d56a80b6380cbb6b4b9274048067bd"}
                           babashka/babashka.curl {:mvn/version "0.1.1"}
                           babashka/fs {:mvn/version "0.1.2"}
+                          com.google.cloud.tools/jib-core {:mvn/version "0.20.0"}
                           cheshire/cheshire {:mvn/version "5.10.2"}}
                    :ns-default build}}}
