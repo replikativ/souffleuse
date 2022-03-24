@@ -49,8 +49,7 @@
   (let [hmac (str "sha256=" (hmac-sha-256 body-str github-token))
         header (get headers "x-hub-signature-256")]
     (if (not= hmac header)
-      (throw (ex-info "HMAC does not match" {:hmac hmac
-                                             :header header}))
+      (f/fail "HMAC does not match")
       body-str)))
 
 (defn trigger-slack-reminder [_]
@@ -93,6 +92,12 @@
       (log/error "Twitter secrets not provided")))
   body)
 
+(defn check-if-release [body]
+  (let [action (:action body)]
+    (when (not= action "released")
+      (f/fail :not-a-release))
+    body))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,14 +106,17 @@
   (let [result (f/ok-> (slurp body)
                        (check-hmac req)
                        (json/parse-string true)
+                       check-if-release
                        log-request
                        trigger-slack-announcement
                        trigger-twitter-announcement)]
     (if (f/failed? result)
-      (do (log/error (f/message result) {:delivery (get headers "X-GitHub-Delivery")
-                                         :event (get headers "X-GitHub-Event")})
-          {:status 500 :body (f/message result)})
-      {:status 201})))
+      (if (= (f/message result) :not-a-release)
+        {:status 202}
+        (do (log/error (f/message result) {:delivery (get headers "X-GitHub-Delivery")
+                                           :event (get headers "X-GitHub-Event")})
+            {:status 500 :body (f/message result)}))
+      {:status 204})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Routes
@@ -142,6 +150,6 @@
   (def payload (json/parse-string (slurp "test/payload.sample.json") true))
   ((juxt :release :repository) payload)
 
-  (srv/server-stop! @server)
+  (-main)
 
   @(clnt/post "http://localhost:3000/github/release" {:headers {"Content-Type" "application/json"} :body (slurp "test/payload.sample.json")}))
