@@ -132,7 +132,7 @@
 
 (defn server []
   (let [port (:port config)
-        url (str "http://localhost:" port "/")]
+        url (str "http://0.0.0.0:" port "/")]
     (log/info "Server started" {:url url
                                 :port port})
     (srv/run-server #'routes {:port port})))
