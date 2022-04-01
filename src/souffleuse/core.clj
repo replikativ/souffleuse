@@ -1,33 +1,30 @@
 (ns souffleuse.core
   (:gen-class)
-  (:require [souffleuse.scheduler :as s]
+  (:require [souffleuse.scheduler :as sch]
             [org.httpkit.server :as srv]
             [org.httpkit.client :as clnt]
             [clojure.core.match :refer [match]]
             [taoensso.timbre :as log]
-            [clojure.string :as str]
             [cheshire.core :as json]
             [twitter.oauth :as oauth]
             [twitter.api.restful :as r]
-            [failjure.core :as f])
+            [failjure.core :as f]
+            [aero.core :as aero]
+            [clojure.string :as s]
+            [clojure.java.io :as io])
   (:import (javax.crypto Mac)
            (javax.crypto.spec SecretKeySpec)))
 
-(def port 3000)
+(def config (aero/read-config (clojure.java.io/resource "config.edn")))
 
-(def github-token (System/getenv "GITHUB_TOKEN"))
+(def twitter-creds (let [{:keys [api-key api-secret access-token access-token-secret]} (:twitter config)]
+                     (oauth/make-oauth-creds api-key
+                                             api-secret
+                                             access-token
+                                             access-token-secret)))
 
-(def slack-hook-url (System/getenv "SLACK_HOOK_URL"))
-(def slack-channel "#datahike")
-
-(def twitter-api-key (System/getenv "TWITTER_API_KEY"))
-(def twitter-api-secret (System/getenv "TWITTER_API_SECRET"))
-(def twitter-access-token (System/getenv "TWITTER_ACCESS_TOKEN"))
-(def twitter-access-token-secret (System/getenv "TWITTER_ACCESS_TOKEN_SECRET"))
-(def twitter-creds (oauth/make-oauth-creds twitter-api-key
-                                           twitter-api-secret
-                                           twitter-access-token
-                                           twitter-access-token-secret))
+(def slack-hook-url (get-in config [:slack :hook-url]))
+(def slack-channel (get-in config [:slack :channel]))
 
 (defn log-request [d]
   (log/info "Received webhook" d)
@@ -46,7 +43,8 @@
     (apply str (map #(format "%02x" %) result))))
 
 (defn check-hmac [body-str {:keys [headers]}]
-  (let [hmac (str "sha256=" (hmac-sha-256 body-str github-token))
+  (let [gh-token (get-in config [:github :token])
+        hmac (str "sha256=" (hmac-sha-256 body-str gh-token))
         header (get headers "x-hub-signature-256")]
     (if (not= hmac header)
       (f/fail "HMAC does not match")
@@ -86,7 +84,7 @@
                         (:tag_name release)
                         (:name repository)
                         (:html_url release))]
-    (if (not-any? nil? [twitter-api-key twitter-api-secret twitter-access-token twitter-access-token-secret])
+    (if (not-any? nil? (:twitter config))
       (r/statuses-update :oauth-creds twitter-creds
                          :params {:status message})
       (log/error "Twitter secrets not provided")))
@@ -123,7 +121,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn routes [{:keys [request-method uri] :as req}]
-  (let [path (vec (rest (str/split uri #"/")))]
+  (let [path (vec (rest (s/split uri #"/")))]
     (match [request-method path]
       [:post ["github" "release"]] (github-hook req)
       :else {:status 404 :body "Error 404: Page not found"})))
@@ -133,14 +131,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn server []
-  (let [url (str "http://localhost:" port "/")]
+  (let [port (:port config)
+        url (str "http://localhost:" port "/")]
     (log/info "Server started" {:url url
                                 :port port})
     (srv/run-server #'routes {:port port})))
 
 (defn scheduler []
   (log/info "Scheduler started")
-  (s/start-scheduler trigger-slack-reminder))
+  (sch/start-scheduler trigger-slack-reminder))
 
 (defn -main [& args]
   (server)

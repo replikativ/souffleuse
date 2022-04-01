@@ -1,0 +1,13 @@
+{:port 3000
+ :slack {:announcement "Version %s of %s was just released. Find the changelog or get in contact with us <%s|over on GitHub.>"
+         :reminder "In a quarter hour we will have our weekly open-source meeting
+                    where we are talking about the latest progress on Datahike and
+                    other replikativ libraries."
+         :hook-url #env SLACK_HOOK
+         :channel "#datahike"}
+ :github {:token #env GITHUB_TOKEN}
+ :twitter {:announcement "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
+           :api-key "xUX4IKD7Uq5Fl4MXGBveWsjxA"
+           :api-secret #env TWITTER_API_SECRET
+           :access-token "282003322-oKYpQl3NwnP0cPW9aIyZqKyV08poYgFrr5T0YsEN"
+           :access-token-secret #env TWITTER_ACCESS_TOKEN_SECRET}}

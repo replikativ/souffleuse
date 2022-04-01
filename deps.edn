@@ -5,7 +5,9 @@
         http-kit/http-kit {:mvn/version "2.5.3"}
         twitter-api/twitter-api {:mvn/version "1.8.0"}
         jarohen/chime {:mvn/version "0.3.3"}
+        aero/aero {:mvn/version "1.1.6"}
         failjure/failjure {:mvn/version "2.2.0"}}
+ :paths ["src" "resource"]
  :aliases {:deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.0"}}
                     :main-opts ["-m" "deps-deploy.deps-deploy" "deploy" "replikativ-datahike.jar"]}
 
