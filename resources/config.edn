@@ -4,7 +4,7 @@
          :reminder "In a quarter hour we will have our weekly open-source meeting
                     where we are talking about the latest progress on Datahike and
                     other replikativ libraries."
-         :hook-url #env SLACK_HOOK
+         :hook-url #env SLACK_HOOK_URL
          :channel "#datahike"}
  :github {:token #env GITHUB_TOKEN}
  :twitter {:announcement "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
