@@ -1,4 +1,5 @@
 {:port 3000
+ :log {:level :info}
  :slack {:announcement "Version %s of %s was just released. Find the changelog or get in contact with us <%s|over on GitHub.>"
          :reminder "In a quarter hour we will have our weekly open-source meeting
                     where we are talking about the latest progress on Datahike and

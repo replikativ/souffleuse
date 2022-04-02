@@ -17,6 +17,8 @@
 
 (def config (aero/read-config (clojure.java.io/resource "config.edn")))
 
+(log/set-level! (get-in config [:log :level]))
+
 (def twitter-creds (let [{:keys [api-key api-secret access-token access-token-secret]} (:twitter config)]
                      (oauth/make-oauth-creds api-key
                                              api-secret
