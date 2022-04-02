@@ -94,9 +94,10 @@
 
 (defn check-if-release [body]
   (let [action (:action body)]
-    (when (not= action "published")
-      (f/fail :not-a-release))
-    body))
+    (log/debug "Received Action" {:action action})
+    (if (not= action "published")
+      (f/fail :not-a-release)
+      body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers
