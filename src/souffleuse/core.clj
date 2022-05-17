@@ -17,8 +17,6 @@
 
 (def config (aero/read-config (clojure.java.io/resource "config.edn")))
 
-(log/set-level! :trace)
-
 (log/trace "Config Loaded" config)
 
 (log/set-level! (get-in config [:log :level]))
@@ -58,9 +56,7 @@
 
 (defn trigger-slack-reminder [_]
   (if slack-hook-url
-    (let [message "In a quarter hour we will have our weekly open-source meeting
-                   where we are talking about the latest progress on Datahike and
-                   other replikativ libraries."
+    (let [message (get-in config [:scheduler :announcement])
           json (json/generate-string {:username "replikativ"
                                       :channel slack-channel
                                       :text message})]
