@@ -23,11 +23,10 @@
                   :main-opts ["-m" "cljfmt.main" "fix"]}
 
            :build {:deps {io.github.clojure/tools.build {:git/tag "v0.7.5" :git/sha "2526f58"}
-                          slipset/deps-deploy {:mvn/version "0.2.0"}
                           borkdude/gh-release-artifact {:git/url "https://github.com/borkdude/gh-release-artifact"
-                                                        :sha "a83ee8da47d56a80b6380cbb6b4b9274048067bd"}
-                          babashka/babashka.curl {:mvn/version "0.1.1"}
-                          babashka/fs {:mvn/version "0.1.2"}
+                                                        :sha "b3f5b4ddfa7600191da176a752f161a91f0b8f9c"}
+                          babashka/babashka.curl {:mvn/version "0.1.2"}
+                          babashka/fs {:mvn/version "0.1.11"}
                           com.google.cloud.tools/jib-core {:mvn/version "0.20.0"}
-                          cheshire/cheshire {:mvn/version "5.10.2"}}
+                          cheshire/cheshire {:mvn/version "5.11.0"}}
                    :ns-default build}}}

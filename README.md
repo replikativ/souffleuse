@@ -12,6 +12,10 @@ Environment variables:
 - `TWITTER_ACCESS_TOKEN`
 - `TWITTER_ACCESS_TOKEN_SECRET`
 
+## Building
+
+After running `clj -T:build uber` you can find the jar in the target-folder.
+
 ## Running
 
 Either via container: https://hub.docker.com/r/replikativ/souffleuse

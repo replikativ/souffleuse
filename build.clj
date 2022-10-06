@@ -1,11 +1,11 @@
 (ns build
   (:require
     [borkdude.gh-release-artifact :as gh]
-    [clojure.tools.build.api :as b]
-    [deps-deploy.deps-deploy :as dd])
+    [clojure.tools.build.api :as b])
   (:import
+    [clojure.lang ExceptionInfo]
     [java.nio.file Paths]
-    [com.google.cloud.tools.jib.api Jib Containerizer RegistryImage TarImage]
+    [com.google.cloud.tools.jib.api Jib Containerizer RegistryImage]
     [com.google.cloud.tools.jib.api.buildplan AbsoluteUnixPath Port]))
 
 (def lib 'io.replikativ/souffleuse)
@@ -13,7 +13,7 @@
 (def current-commit (gh/current-commit))
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
-(def jar-path (format "target/%s-%s.jar" (name lib) version))
+(def jar-file (format "target/%s-%s.jar" (name lib) version))
 (def uber-file (format "%s-%s-standalone.jar" (name lib) version))
 (def uber-path (format "target/%s" uber-file))
 (def image (format "docker.io/replikativ/souffleuse:%s" version))
@@ -37,7 +37,7 @@
   (b/copy-dir {:src-dirs ["src" "resources"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
-          :jar-file jar-path}))
+          :jar-file jar-file}))
 
 (defn uber
   [_]
@@ -52,22 +52,35 @@
            :basis basis
            :main 'souffleuse.core}))
 
-(defn deploy
-  "Don't forget to set CLOJARS_USERNAME and CLOJARS_PASSWORD env vars."
-  [_]
-  (dd/deploy {:installer :remote :artifact jar-path
-              :pom-file (b/pom-path {:lib lib :class-dir class-dir})}))
+(defn fib [a b]
+  (lazy-seq (cons a (fib b (+ a b)))))
+
+(defn retry-with-fib-backoff [retries exec-fn test-fn]
+  (loop [idle-times (take retries (fib 1 2))]
+    (let [result (exec-fn)]
+      (if (test-fn result)
+        (if-let [sleep-ms (first idle-times)]
+          (do (println "Returned: " result)
+              (println "Retrying with remaining back-off times (in s): " idle-times)
+              (Thread/sleep (* 1000 sleep-ms))
+              (recur (rest idle-times)))
+          (do (println "Failed deploying artifact.")
+              (System/exit 1)))
+        (println "Successfully created release-draft")))))
+
+(defn try-release []
+  (try (gh/overwrite-asset {:org "replikativ"
+                            :repo (name lib)
+                            :tag version
+                            :commit current-commit
+                            :file jar-file
+                            :content-type "application/java-archive"})
+       (catch ExceptionInfo e
+         (assoc (ex-data e) :failure? true))))
 
 (defn release
   [_]
-  (-> (gh/overwrite-asset {:org "replikativ"
-                           :repo (name lib)
-                           :tag version
-                           :commit current-commit
-                           :file uber-path
-                           :content-type "application/java-archive"})
-      :url
-      println))
+  (retry-with-fib-backoff 10 try-release :failure?))
 
 (defn install
   [_]
@@ -76,7 +89,7 @@
   (b/install {:basis (b/create-basis {})
               :lib lib
               :version version
-              :jar-file jar-path
+              :jar-file jar-file
               :class-dir class-dir}))
 
 (defn deploy-image
@@ -104,6 +117,5 @@
   (uber nil)
   (deploy-image {:docker-login docker-login
                  :docker-password docker-password})
-  (deploy nil)
   (release nil)
   (install nil))
