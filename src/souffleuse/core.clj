@@ -141,8 +141,8 @@
     (srv/run-server #'routes {:port port})))
 
 (defn scheduler []
-  (log/info "Scheduler started")
-  (sch/start-scheduler trigger-slack-reminder))
+  (sch/start-scheduler trigger-slack-reminder (:scheduler config))
+  (log/info "Scheduler started"))
 
 (defn -main [& args]
   (server)
