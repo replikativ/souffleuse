@@ -15,6 +15,5 @@
                                                  .toInstant)
                                              (Period/ofDays 1))
                          (map #(.atZone % (ZoneId/of zone)))
-                         (filter (comp #{dow} #(.getDayOfWeek %)))
-                         rest)
+                         (filter (comp #{dow} #(.getDayOfWeek %))))
                     scheduled-fn)))
