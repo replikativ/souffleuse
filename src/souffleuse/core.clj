@@ -30,6 +30,12 @@
 (def slack-hook-url (get-in config [:slack :hook-url]))
 (def slack-channel (get-in config [:slack :channel]))
 
+(def rocketchat-channel (get-in config [:rocketchat :channel]))
+(def rocketchat-secret (get-in config [:rocketchat :secret]))
+(def rocketchat-token (get-in config [:rocketchat :token]))
+(def rocketchat-hook-url (str "https://chat.lambdaforge.io/hooks/"rocketchat-token"/"rocketchat-secret))
+
+
 (defn log-request [d]
   (log/info "Received webhook" d)
   d)
@@ -91,6 +97,19 @@
                          :params {:status message})
       (log/error "Twitter secrets not provided")))
   body)
+(defn trigger-rocketchat-announcement [body]
+		(let [[release repository] ((juxt :release :repository) body)
+								message (format "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
+                        (:tag_name release)
+                        (:name repository)
+                        (:html_url release))
+								json (json/generate-string {:username "rocket.chat"
+                                    :channel rocketchat-channel
+                                    :text message})]
+      (clnt/post rocketchat-hook-url {:headers {"content-type" "application/json"}
+                                      :body json}))
+    (log/error "RocketChat Hook URL not provided")
+  body)
 
 (defn check-if-release [body]
   (let [action (:action body)]
@@ -110,7 +129,8 @@
                        check-if-release
                        log-request
                        trigger-slack-announcement
-                       trigger-twitter-announcement)]
+                       trigger-twitter-announcement
+                       trigger-rocketchat-announcement)]
     (if (f/failed? result)
       (if (= (f/message result) :not-a-release)
         {:status 202}
