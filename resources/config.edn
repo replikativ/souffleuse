@@ -15,4 +15,7 @@ other replikativ libraries. Please join on <https://meet.jit.si/DatahikeWeekly|J
            :api-key "xUX4IKD7Uq5Fl4MXGBveWsjxA"
            :api-secret #env TWITTER_API_SECRET
            :access-token "282003322-oKYpQl3NwnP0cPW9aIyZqKyV08poYgFrr5T0YsEN"
-           :access-token-secret #env TWITTER_ACCESS_TOKEN_SECRET}}
+           :access-token-secret #env TWITTER_ACCESS_TOKEN_SECRET}
+ :rocketchat {:token #env ROCKETCHAT_API_TOKEN
+              :secret #env ROCKETCHAT_API_SECRET
+              :channel "souffleuse_test"}}
