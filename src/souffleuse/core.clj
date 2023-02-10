@@ -35,7 +35,6 @@
 (def rocketchat-token (get-in config [:rocketchat :token]))
 (def rocketchat-hook-url (str "https://chat.lambdaforge.io/hooks/" rocketchat-token "/" rocketchat-secret))
 
-
 (defn log-request [d]
   (log/info "Received webhook" d)
   d)
@@ -102,9 +101,9 @@
   (if rocketchat-hook-url
     (let [[release repository] ((juxt :release :repository) body)
           message (format "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
-                    (:tag_name release)
-                    (:name repository)
-                    (:html_url release))
+                          (:tag_name release)
+                          (:name repository)
+                          (:html_url release))
           json (json/generate-string {:username "rocket.chat"
                                       :channel rocketchat-channel
                                       :text message})]
