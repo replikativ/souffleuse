@@ -12,8 +12,8 @@
             [aero.core :as aero]
             [clojure.string :as s]
             [clojure.java.io :as io])
-  (:import (javax.crypto Mac)
-           (javax.crypto.spec SecretKeySpec)))
+  (:import [javax.crypto Mac]
+           [javax.crypto.spec SecretKeySpec]))
 
 (def config (aero/read-config (clojure.java.io/resource "config.edn")))
 
@@ -29,6 +29,11 @@
 
 (def slack-hook-url (get-in config [:slack :hook-url]))
 (def slack-channel (get-in config [:slack :channel]))
+
+(def rocketchat-channel (get-in config [:rocketchat :channel]))
+(def rocketchat-secret (get-in config [:rocketchat :secret]))
+(def rocketchat-token (get-in config [:rocketchat :token]))
+(def rocketchat-hook-url (str "https://chat.lambdaforge.io/hooks/" rocketchat-token "/" rocketchat-secret))
 
 (defn log-request [d]
   (log/info "Received webhook" d)
@@ -92,6 +97,21 @@
       (log/error "Twitter secrets not provided")))
   body)
 
+(defn trigger-rocketchat-announcement [body]
+  (if rocketchat-hook-url
+    (let [[release repository] ((juxt :release :repository) body)
+          message (format "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
+                          (:tag_name release)
+                          (:name repository)
+                          (:html_url release))
+          json (json/generate-string {:username "rocket.chat"
+                                      :channel rocketchat-channel
+                                      :text message})]
+      (clnt/post rocketchat-hook-url {:headers {"content-type" "application/json"}
+                                      :body json}))
+    (log/error "RocketChat Hook URL not provided"))
+  body)
+
 (defn check-if-release [body]
   (let [action (:action body)]
     (log/debug "Received Action" {:action action})
@@ -110,7 +130,8 @@
                        check-if-release
                        log-request
                        trigger-slack-announcement
-                       trigger-twitter-announcement)]
+                       trigger-twitter-announcement
+                       trigger-rocketchat-announcement)]
     (if (f/failed? result)
       (if (= (f/message result) :not-a-release)
         {:status 202}
@@ -152,6 +173,9 @@
   (def payload (json/parse-string (slurp "test/payload.sample.json") true))
   ((juxt :release :repository) payload)
 
-  (-main)
+  (trigger-rocketchat-announcement {:release {:tag_name "0.0.0"
+                                              :html_url "foobar.com"}
+                                    :repository {:name "foobar"}})
 
+  (-main)
   @(clnt/post "http://localhost:3000/github/release" {:headers {"Content-Type" "application/json"} :body (slurp "test/payload.sample.json")}))
