@@ -18,4 +18,4 @@ other replikativ libraries. Please join on <https://meet.jit.si/DatahikeWeekly|J
            :access-token-secret #env TWITTER_ACCESS_TOKEN_SECRET}
  :rocketchat {:token #env ROCKETCHAT_API_TOKEN
               :secret #env ROCKETCHAT_API_SECRET
-              :channel "souffleuse_test"}}
+              :channel "datahike-datopia"}}
