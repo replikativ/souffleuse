@@ -155,7 +155,7 @@
                        filter-relevant-releases
                        log-request
                        trigger-slack-announcement
-                       trigger-twitter-announcement
+                       #_trigger-twitter-announcement
                        trigger-rocketchat-announcement)]
     (if (f/failed? result)
       (case (f/message result)
