@@ -27,6 +27,8 @@
                                              access-token
                                              access-token-secret)))
 
+(def github-bearer-token (get-in config [:github :token]))
+
 (def slack-hook-url (get-in config [:slack :hook-url]))
 (def slack-channel (get-in config [:slack :channel]))
 
@@ -119,6 +121,28 @@
       (f/fail :not-a-release)
       body)))
 
+(defn filter-relevant-releases [{{url :commits_url} :repository
+                                 {sha :target_commitish} :release
+                                 :as body}]
+  (let [url (s/replace url "{/sha}" (str "/" sha))
+        commit-data (-> (clnt/get url {:header {"Accept" "application/vnd.github+json"
+                                                "Authorization" (str "Bearer " github-bearer-token)
+                                                "X-GitHub-Api-Version" "2022-11-28"}})
+                        deref
+                        :body
+                        (json/parse-string true))
+        conventional-commit-type (when-let [matches (->> (get-in commit-data [:commit :message]) (re-find #"^(\S+):"))]
+                                   (-> (second matches) keyword))]
+    (if (and conventional-commit-type (conventional-commit-type #{:ci :docs :style}))
+      (f/fail :not-a-relevant-release)
+      body)))
+
+(comment
+  (filter-relevant-releases {:release {:target_commitish "d7609c8f6a6636da208fef5e467327c716a6c792"}
+                             :repository {:commits_url "https://api.github.com/repos/replikativ/datahike-jdbc/commits{/sha}"}})
+  (filter-relevant-releases {:release {:target_commitish "fad8985c73331b441301cff7b851907d5c2b1eb8"}
+                             :repository {:commits_url "https://api.github.com/repos/replikativ/datahike-jdbc/commits{/sha}"}}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,13 +152,15 @@
                        (check-hmac req)
                        (json/parse-string true)
                        check-if-release
+                       filter-relevant-releases
                        log-request
                        trigger-slack-announcement
                        trigger-twitter-announcement
                        trigger-rocketchat-announcement)]
     (if (f/failed? result)
-      (if (= (f/message result) :not-a-release)
-        {:status 202}
+      (case (f/message result)
+        :not-a-release {:status 202}
+        :not-a-relevant-release {:status 202}
         (do (log/error (f/message result) {:delivery (get headers "X-GitHub-Delivery")
                                            :event (get headers "X-GitHub-Event")})
             {:status 500 :body (f/message result)}))
