@@ -7,7 +7,7 @@
  :scheduler {:announcement "In a quarter hour we will have our weekly open-source meeting
 where we are talking about the latest progress on Datahike and
 other replikativ libraries. Please join on <https://meet.jit.si/DatahikeWeekly|Jitsi>"
-             :hour 15
+             :hour 16
              :minute 45
              :dow :thursday
              :zone "Europe/Berlin"}
