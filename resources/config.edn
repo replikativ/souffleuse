@@ -10,12 +10,4 @@ other replikativ libraries. Please join on <https://meet.jit.si/DatahikeWeekly|J
              :hour 16
              :minute 45
              :dow :thursday
-             :zone "Europe/Berlin"}
- :twitter {:announcement "Version %s of %s was just released. Take a look at the changelog over on GitHub: %s"
-           :api-key "xUX4IKD7Uq5Fl4MXGBveWsjxA"
-           :api-secret #env TWITTER_API_SECRET
-           :access-token "282003322-oKYpQl3NwnP0cPW9aIyZqKyV08poYgFrr5T0YsEN"
-           :access-token-secret #env TWITTER_ACCESS_TOKEN_SECRET}
- :rocketchat {:token #env ROCKETCHAT_API_TOKEN
-              :secret #env ROCKETCHAT_API_SECRET
-              :channel "datahike-datopia"}}
+             :zone "Europe/Berlin"}}
