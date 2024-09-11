@@ -25,7 +25,7 @@
 (def slack-channel (get-in config [:slack :channel]))
 
 (defn log-request [d]
-  (log/info "Received webhook" d)
+  (log/info "Received Webhook" d)
   d)
 
 (defn hmac-sha-256
@@ -60,7 +60,8 @@
     (log/error "Slack Hook URL not provided")))
 
 (defn trigger-slack-announcement [body]
-  (if slack-hook-url
+  (if (not slack-hook-url)
+    (log/error "Slack Hook URL not provided")
     (let [[release repository] ((juxt :release :repository) body)
           message (format "Version %s of %s was just released. Find the changelog or get in contact with us <%s|over on GitHub.>"
                           (:tag_name release)
@@ -68,11 +69,13 @@
                           (:html_url release))
           json (json/generate-string {:username "timo"
                                       :channel slack-channel
-                                      :text message})]
-      (clnt/post slack-hook-url {:headers {"content-type" "application/json"}
-                                 :body json}))
-    (log/error "Slack Hook URL not provided"))
-  body)
+                                      :text message})
+          result (clnt/post slack-hook-url {:headers {"content-type" "application/json"}
+                                            :body json})]
+      (if (>= (:status (deref result)) 400)
+        (do (log/error "Slack Hook failed" {:message message :result (deref result)})
+            (f/fail "Slack Hook failed"))
+        body))))
 
 (defn check-if-release [body]
   (let [action (:action body)]
@@ -97,12 +100,6 @@
       (f/fail :not-a-relevant-release)
       body)))
 
-(comment
-  (filter-relevant-releases {:release {:target_commitish "d7609c8f6a6636da208fef5e467327c716a6c792"}
-                             :repository {:commits_url "https://api.github.com/repos/replikativ/datahike-jdbc/commits{/sha}"}})
-  (filter-relevant-releases {:release {:target_commitish "fad8985c73331b441301cff7b851907d5c2b1eb8"}
-                             :repository {:commits_url "https://api.github.com/repos/replikativ/datahike-jdbc/commits{/sha}"}}))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -119,8 +116,8 @@
       (case (f/message result)
         :not-a-release {:status 202}
         :not-a-relevant-release {:status 202}
-        (do (log/error (f/message result) {:delivery (get headers "X-GitHub-Delivery")
-                                           :event (get headers "X-GitHub-Event")})
+        (do (log/error (f/message result) {:delivery (get headers "x-github-delivery")
+                                           :event (get headers "x-github-event")})
             {:status 500 :body (f/message result)}))
       {:status 204})))
 
